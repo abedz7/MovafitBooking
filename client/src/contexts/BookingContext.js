@@ -16,116 +16,50 @@ export const useBooking = () => {
 const mockPackages = [
   {
     _id: '1',
-    name: 'חבילת פיזיותרפיה בסיסית',
-    description: 'חבילה בסיסית לטיפולי פיזיותרפיה עם 5 מפגשים',
-    numberOfSessions: 5,
-    price: 500,
-    originalPrice: 600,
-    category: 'basic',
+    name: 'טיפול יחיד - אינפרבייק',
+    description: 'טיפול יחיד במכונת האינפרבייק - 45 דקות של שריפת קלוריות מהירה',
+    numberOfSessions: 1,
+    price: 150,
+    category: 'single',
     gender: 'both',
     isActive: true,
     features: [
-      '5 מפגשי פיזיותרפיה',
-      'הערכה ראשונית',
-      'תוכנית טיפול מותאמת',
-      'מעקב אחר התקדמות'
+      '45 דקות אימון באינפרבייק',
+      'עד 2000+ קלוריות בטיפול',
+      'שריפת קלוריות מהירה ויעילה',
+      'הדרכה מקצועית',
+      'מעקב אחר ביצועים'
     ],
-    validityDays: 90
+    validityDays: 30,
+    machine: 'Infrabike',
+    duration: '45 דקות',
+    calories: 'עד 2000+ קלוריות'
   },
   {
     _id: '2',
-    name: 'חבילת עיסוי רפואי פרימיום',
-    description: 'חבילה מתקדמת לעיסוי רפואי עם 8 מפגשים',
-    numberOfSessions: 8,
-    price: 1200,
-    originalPrice: 1400,
-    category: 'premium',
+    name: 'חבילת 10+1 - אינפרבייק',
+    description: 'חבילה משתלמת של 10 טיפולים + 1 חינם במכונת האינפרבייק',
+    numberOfSessions: 11,
+    price: 1500,
+    originalPrice: 1650,
+    category: 'package',
     gender: 'both',
     isActive: true,
     isPopular: true,
     features: [
-      '8 מפגשי עיסוי רפואי',
-      'הערכה מקיפה',
-      'טיפול בכאבים כרוניים',
-      'תרגילי בית',
-      'מעקב טלפוני'
+      '11 מפגשי אינפרבייק (10+1 חינם)',
+      '45 דקות לכל מפגש',
+      'עד 2000+ קלוריות בטיפול',
+      'חיסכון של 150 ש"ח',
+      'תוקף 6 חודשים',
+      'הדרכה מקצועית',
+      'מעקב אחר התקדמות'
     ],
-    validityDays: 120
-  },
-  {
-    _id: '3',
-    name: 'חבילת טיפולי ספורט VIP',
-    description: 'חבילה יוקרתית לטיפולי ספורט עם 12 מפגשים',
-    numberOfSessions: 12,
-    price: 2000,
-    originalPrice: 2400,
-    category: 'vip',
-    gender: 'both',
-    isActive: true,
-    isPopular: true,
-    features: [
-      '12 מפגשי טיפול',
-      'הערכה ספורטיבית מלאה',
-      'תוכנית אימונים מותאמת',
-      'טיפול בפציעות ספורט',
-      'ייעוץ תזונתי',
-      'מעקב שבועי'
-    ],
-    validityDays: 180
-  },
-  {
-    _id: '4',
-    name: 'חבילת טיפולים לנשים',
-    description: 'חבילה מיוחדת לטיפולים המותאמים לנשים',
-    numberOfSessions: 6,
-    price: 800,
-    originalPrice: 900,
-    category: 'special',
-    gender: 'female',
-    isActive: true,
-    features: [
-      '6 מפגשי טיפול',
-      'טיפולי רצפת אגן',
-      'טיפול בכאבי גב',
-      'ייעוץ אורח חיים',
-      'תרגילי חיזוק'
-    ],
-    validityDays: 100
-  },
-  {
-    _id: '5',
-    name: 'חבילת טיפולים לגברים',
-    description: 'חבילה מיוחדת לטיפולים המותאמים לגברים',
-    numberOfSessions: 6,
-    price: 800,
-    originalPrice: 900,
-    category: 'special',
-    gender: 'male',
-    isActive: true,
-    features: [
-      '6 מפגשי טיפול',
-      'טיפול בכאבי גב',
-      'שיקום פציעות',
-      'ייעוץ אורח חיים',
-      'תרגילי חיזוק'
-    ],
-    validityDays: 100
-  },
-  {
-    _id: '6',
-    name: 'חבילת טיפול יחיד',
-    description: 'טיפול בודד לכל סוגי הטיפולים',
-    numberOfSessions: 1,
-    price: 150,
-    category: 'basic',
-    gender: 'both',
-    isActive: true,
-    features: [
-      'טיפול יחיד',
-      'הערכה ראשונית',
-      'המלצות לטיפול המשך'
-    ],
-    validityDays: 30
+    validityDays: 180,
+    machine: 'Infrabike',
+    duration: '45 דקות',
+    calories: 'עד 2000+ קלוריות',
+    savings: 150
   }
 ];
 

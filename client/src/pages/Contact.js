@@ -1,18 +1,41 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Phone, Mail, MapPin, Clock, Send, MessageCircle, User, Mail as MailIcon, Navigation, ExternalLink } from 'lucide-react';
+import { Phone, Mail, MapPin, Clock, Send, MessageCircle, User, Mail as MailIcon, Navigation, MessageSquare } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 
 const Contact = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPhoneModal, setShowPhoneModal] = useState(false);
   const { register, handleSubmit, formState: { errors }, reset } = useForm();
 
   // Coordinates for the clinic
   const clinicCoordinates = {
     lat: 32.255725,
     lng: 34.996380,
-    address: 'רחוב הרצל 123, כביש ראשי 444, טייבה, ישראל'
+    address: 'טייבה כביש ראשי 444, תחנת דלק שפע אנרגיה, בניין BE PHARM קומה 3'
+  };
+
+  // WhatsApp function
+  const openWhatsApp = () => {
+    const phoneNumber = '0527771621';
+    const message = 'שלום, אני מעוניין לקבל מידע נוסף על השירותים שלכם';
+    const url = `https://wa.me/972${phoneNumber.replace('0', '')}?text=${encodeURIComponent(message)}`;
+    window.open(url, '_blank');
+  };
+
+  // Phone call function
+  const handlePhoneCall = () => {
+    const phoneNumber = '0527771621';
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      // On mobile, directly call the number
+      window.location.href = `tel:${phoneNumber}`;
+    } else {
+      // On PC, show modal with phone number
+      setShowPhoneModal(true);
+    }
   };
 
   // Navigation functions
@@ -34,9 +57,21 @@ const Contact = () => {
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
-      // Simulate form submission
+      // Simulate form submission - send to WhatsApp
       await new Promise(resolve => setTimeout(resolve, 1000));
-      toast.success('ההודעה נשלחה בהצלחה! נחזור אליך בהקדם');
+      
+      // Create WhatsApp message with form data
+      const message = `הודעה חדשה מהאתר:
+שם: ${data.firstName} ${data.lastName}
+אימייל: ${data.email}
+נושא: ${data.subject}
+הודעה: ${data.message}`;
+      
+      const phoneNumber = '0527771621';
+      const url = `https://wa.me/972${phoneNumber.replace('0', '')}?text=${encodeURIComponent(message)}`;
+      window.open(url, '_blank');
+      
+      toast.success('ההודעה נשלחה לווטסאפ! נחזור אליך בהקדם');
       reset();
     } catch (error) {
       toast.error('שגיאה בשליחת ההודעה');
@@ -48,27 +83,27 @@ const Contact = () => {
   const contactInfo = [
     {
       icon: Phone,
-      title: 'טלפון',
-      details: ['03-1234567', '050-1234567'],
+      title: 'מספר טלפון',
+      details: ['0527771621'],
       description: 'זמינים 24/7'
-    },
-    {
-      icon: Mail,
-      title: 'אימייל',
-      details: ['info@movafit.co.il', 'support@movafit.co.il'],
-      description: 'נענה תוך 24 שעות'
     },
     {
       icon: MapPin,
       title: 'כתובת',
-      details: ['רחוב הרצל 123', 'כביש ראשי 444, טייבה, ישראל'],
+      details: ['טייבה כביש ראשי 444', 'תחנת דלק שפע אנרגיה', 'בניין BE PHARM קומה 3'],
       description: 'במרכז העיר'
     },
     {
       icon: Clock,
       title: 'שעות פעילות',
-      details: ['א׳-ה׳: 08:00-20:00', 'ו׳: 08:00-14:00'],
-      description: 'שבת סגור'
+      details: ['פתוח כל השבוע'],
+      description: 'אין כרגע שעות מסוימות, אחר כך נעדכן'
+    },
+    {
+      icon: Mail,
+      title: 'אימייל',
+      details: ['אין כרגע'],
+      description: 'נשמח לעזור בווטסאפ'
     }
   ];
 
@@ -107,9 +142,20 @@ const Contact = () => {
           <h1 className="text-4xl font-bold text-white mb-4">
             צור קשר
           </h1>
-          <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+          <p className="text-xl text-gray-300 max-w-2xl mx-auto mb-8">
             אנחנו כאן לעזור לך. צור איתנו קשר בכל שאלה או בקשה
           </p>
+          
+          {/* WhatsApp Button */}
+          <motion.button
+            onClick={openWhatsApp}
+            className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-lg text-lg font-medium flex items-center justify-center mx-auto transition-all duration-200 shadow-lg hover:shadow-xl"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <MessageSquare className="h-6 w-6 ml-2" />
+            שלח הודעה בווטסאפ
+          </motion.button>
         </motion.div>
 
         {/* Contact Info Cards */}
@@ -163,6 +209,9 @@ const Contact = () => {
                 שלח לנו הודעה
               </h2>
             </div>
+            <p className="text-gray-400 mb-6 text-center">
+              ההודעה תישלח לווטסאפ עם הפרטים שהזנת
+            </p>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -328,20 +377,20 @@ const Contact = () => {
                 צור איתנו קשר ונשמח לעזור לך בכל שאלה
               </p>
               <div className="flex flex-col sm:flex-row gap-3">
-                <a
-                  href="tel:03-1234567"
+                <button
+                  onClick={handlePhoneCall}
                   className="flex items-center justify-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
                 >
                   <Phone className="h-4 w-4 ml-2" />
                   התקשר עכשיו
-                </a>
-                <a
-                  href="mailto:info@movafit.co.il"
-                  className="flex items-center justify-center px-4 py-2 bg-gray-800 text-primary-600 border border-primary-600 rounded-lg hover:bg-primary-50 transition-colors"
+                </button>
+                <button
+                  onClick={openWhatsApp}
+                  className="flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                 >
-                  <Mail className="h-4 w-4 ml-2" />
-                  שלח אימייל
-                </a>
+                  <MessageSquare className="h-4 w-4 ml-2" />
+                  שלח הודעה בווטסאפ
+                </button>
               </div>
             </div>
           </motion.div>
@@ -367,9 +416,9 @@ const Contact = () => {
                 כתובת המרפאה
               </h3>
               <div className="space-y-2 text-gray-300 mb-6">
-                <p>רחוב הרצל 123</p>
-                <p>כביש ראשי 444, טייבה, ישראל</p>
-                <p>מיקוד: 4040000</p>
+                <p>טייבה כביש ראשי 444</p>
+                <p>תחנת דלק שפע אנרגיה</p>
+                <p>בניין BE PHARM קומה 3</p>
               </div>
 
               <h3 className="text-lg font-semibold text-white mb-4">
@@ -404,7 +453,7 @@ const Contact = () => {
               </h3>
               <div className="space-y-2 text-gray-300">
                 <p>• אוטובוס: קווים 13, 23, 123, 113, 39, 458 (תחנה: תחנת דלק)</p>
-                <p>• רכב: כביש ראשי 444, חניה ציבורית זמינה בקרבת מקום</p>
+                <p>• רכב: כביש ראשי 444, חניה ציבורית זמינה</p>
               </div>
             </div>
 
@@ -422,6 +471,56 @@ const Contact = () => {
             </div>
           </div>
         </motion.div>
+
+        {/* Phone Modal */}
+        {showPhoneModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-gray-800 rounded-lg p-8 max-w-md w-full mx-4"
+            >
+              <div className="text-center">
+                <div className="flex justify-center mb-4">
+                  <div className="p-3 bg-primary-100 rounded-full">
+                    <Phone className="h-8 w-8 text-primary-600" />
+                  </div>
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-4">
+                  התקשר אלינו
+                </h3>
+                <p className="text-gray-300 mb-6">
+                  מספר הטלפון שלנו:
+                </p>
+                <div className="bg-gray-700 rounded-lg p-4 mb-6">
+                  <p className="text-3xl font-bold text-primary-600">
+                    0527771621
+                  </p>
+                </div>
+                <p className="text-gray-400 text-sm mb-6">
+                  העתק את המספר והתקשר אלינו
+                </p>
+                <div className="flex space-x-4">
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText('0527771621');
+                      toast.success('המספר הועתק ללוח');
+                    }}
+                    className="flex-1 bg-primary-600 text-white py-3 px-4 rounded-lg hover:bg-primary-700 transition-colors"
+                  >
+                    העתק מספר
+                  </button>
+                  <button
+                    onClick={() => setShowPhoneModal(false)}
+                    className="flex-1 bg-gray-600 text-white py-3 px-4 rounded-lg hover:bg-gray-700 transition-colors"
+                  >
+                    סגור
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
       </div>
     </div>
   );

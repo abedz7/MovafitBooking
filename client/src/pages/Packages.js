@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Package, Star, Check, ShoppingCart } from 'lucide-react';
+import { Package, Star, Check, ShoppingCart, Zap, Clock, Flame } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useBooking } from '../contexts/BookingContext';
 import { Link } from 'react-router-dom';
@@ -42,25 +42,6 @@ const Packages = () => {
     }
   };
 
-  const getCategoryColor = (category) => {
-    switch (category) {
-      case 'basic': return 'bg-blue-100 text-blue-800';
-      case 'premium': return 'bg-purple-100 text-purple-800';
-      case 'vip': return 'bg-yellow-100 text-yellow-800';
-      case 'special': return 'bg-pink-100 text-pink-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getCategoryLabel = (category) => {
-    const categoryLabels = {
-      'basic': 'בסיסי',
-      'premium': 'פרימיום',
-      'vip': 'VIP',
-      'special': 'מיוחד'
-    };
-    return categoryLabels[category] || category;
-  };
 
   const getGenderLabel = (gender) => {
     const genderLabels = {
@@ -78,12 +59,26 @@ const Packages = () => {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-8"
+          className="text-center mb-12"
         >
-          <h1 className="text-3xl font-bold text-white mb-2">
-            חבילות טיפולים
-          </h1>
-          <p className="text-gray-300">בחר את החבילה המתאימה לך</p>
+          <div className="flex items-center justify-center mb-4">
+            <Flame className="h-8 w-8 text-orange-500 ml-2" />
+            <h1 className="text-4xl font-bold text-white">
+              חבילות אינפרבייק
+            </h1>
+            <Flame className="h-8 w-8 text-orange-500 mr-2" />
+          </div>
+          <p className="text-gray-300 text-lg mb-4">שריפת קלוריות מהירה ויעילה - עד 2000+ קלוריות בטיפול</p>
+          <div className="flex items-center justify-center space-x-6 text-sm text-gray-400">
+            <div className="flex items-center">
+              <Clock className="h-4 w-4 ml-1" />
+              <span>45 דקות בטיפול</span>
+            </div>
+            <div className="flex items-center">
+              <Zap className="h-4 w-4 ml-1" />
+              <span>עד 2000+ קלוריות</span>
+            </div>
+          </div>
         </motion.div>
 
 
@@ -93,10 +88,10 @@ const Packages = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+          className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto"
         >
           {loading ? (
-            Array.from({ length: 6 }).map((_, index) => (
+            Array.from({ length: 2 }).map((_, index) => (
               <div key={index} className="bg-gray-800 rounded-lg shadow p-6 animate-pulse">
                 <div className="h-4 bg-gray-200 rounded mb-4"></div>
                 <div className="h-3 bg-gray-200 rounded mb-2"></div>
@@ -111,97 +106,105 @@ const Packages = () => {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.3 }}
-                className={`bg-gray-800 rounded-lg shadow-lg p-6 relative ${
-                  pkg.isPopular ? 'ring-2 ring-primary-500' : ''
+                className={`bg-gray-800 rounded-lg shadow-lg p-8 relative ${
+                  pkg.isPopular ? 'ring-2 ring-orange-500 bg-gradient-to-br from-gray-800 to-gray-700' : ''
                 }`}
               >
                 {pkg.isPopular && (
-                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                    <span className="bg-primary-500 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center">
+                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                    <span className="bg-orange-500 text-white px-4 py-2 rounded-full text-sm font-medium flex items-center shadow-lg">
                       <Star className="h-4 w-4 ml-1" />
-                      פופולרי
+                      הכי פופולרי
                     </span>
                   </div>
                 )}
 
-                <div className="text-center mb-4">
-                  <div className="flex items-center justify-center mb-2">
-                    <Package className="h-8 w-8 text-primary-600" />
+                <div className="text-center mb-6">
+                  <div className="flex items-center justify-center mb-4">
+                    <div className="bg-orange-100 p-3 rounded-full">
+                      <Flame className="h-10 w-10 text-orange-600" />
+                    </div>
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-2">{pkg.name}</h3>
-                  <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getCategoryColor(pkg.category)}`}>
-                    {getCategoryLabel(pkg.category)}
-                  </span>
+                  <h3 className="text-2xl font-bold text-white mb-3">{pkg.name}</h3>
+                  <div className="flex items-center justify-center space-x-4 text-sm text-gray-300 mb-4">
+                    <div className="flex items-center">
+                      <Clock className="h-4 w-4 ml-1" />
+                      <span>{pkg.duration}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <Zap className="h-4 w-4 ml-1" />
+                      <span>{pkg.calories}</span>
+                    </div>
+                  </div>
                 </div>
 
-                <p className="text-gray-300 text-center mb-4">{pkg.description}</p>
+                <p className="text-gray-300 text-center mb-6 text-lg">{pkg.description}</p>
 
-                <div className="text-center mb-4">
-                  <div className="text-3xl font-bold text-primary-600 mb-1">
+                <div className="text-center mb-6">
+                  <div className="text-4xl font-bold text-orange-500 mb-2">
                     ₪{pkg.price}
                   </div>
                   {pkg.originalPrice && pkg.originalPrice > pkg.price && (
-                    <div className="text-sm text-gray-500">
-                      <span className="line-through">₪{pkg.originalPrice}</span>
-                      <span className="text-green-600 font-medium mr-2">
-                        חיסכון של ₪{pkg.originalPrice - pkg.price}
+                    <div className="text-sm text-gray-400 mb-2">
+                      <span className="line-through text-lg">₪{pkg.originalPrice}</span>
+                      <span className="text-green-500 font-medium mr-2 text-lg">
+                        חיסכון של ₪{pkg.savings}
                       </span>
                     </div>
                   )}
-                  <div className="text-sm text-gray-500">
+                  <div className="text-sm text-gray-400">
                     ₪{Math.round(pkg.price / pkg.numberOfSessions)} למפגש
                   </div>
                 </div>
 
-                <div className="mb-4">
-                  <div className="flex items-center justify-between text-sm text-gray-300 mb-2">
+                <div className="mb-6 bg-gray-700 rounded-lg p-4">
+                  <div className="flex items-center justify-between text-sm text-gray-300 mb-3">
                     <span>מספר מפגשים:</span>
-                    <span className="font-medium">{pkg.numberOfSessions}</span>
+                    <span className="font-medium text-white text-lg">{pkg.numberOfSessions}</span>
                   </div>
-                  <div className="flex items-center justify-between text-sm text-gray-300 mb-2">
+                  <div className="flex items-center justify-between text-sm text-gray-300 mb-3">
                     <span>מתאים ל:</span>
-                    <span className="font-medium">{getGenderLabel(pkg.gender)}</span>
+                    <span className="font-medium text-white">{getGenderLabel(pkg.gender)}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm text-gray-300">
                     <span>תקופת תוקף:</span>
-                    <span className="font-medium">{pkg.validityDays} ימים</span>
+                    <span className="font-medium text-white">{pkg.validityDays} ימים</span>
                   </div>
                 </div>
 
                 {pkg.features && pkg.features.length > 0 && (
-                  <div className="mb-4">
-                    <h4 className="text-sm font-medium text-white mb-2">כולל:</h4>
-                    <ul className="space-y-1">
-                      {pkg.features.slice(0, 3).map((feature, index) => (
+                  <div className="mb-6">
+                    <h4 className="text-lg font-medium text-white mb-4 text-center">כולל:</h4>
+                    <ul className="space-y-2">
+                      {pkg.features.map((feature, index) => (
                         <li key={index} className="flex items-center text-sm text-gray-300">
-                          <Check className="h-4 w-4 text-green-500 ml-2 flex-shrink-0" />
-                          {feature}
+                          <Check className="h-5 w-5 text-green-500 ml-3 flex-shrink-0" />
+                          <span className="text-base">{feature}</span>
                         </li>
                       ))}
-                      {pkg.features.length > 3 && (
-                        <li className="text-sm text-gray-500">
-                          ועוד {pkg.features.length - 3} תכונות...
-                        </li>
-                      )}
                     </ul>
                   </div>
                 )}
 
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {user ? (
                     <button
                       onClick={() => handlePurchasePackage(pkg._id)}
                       disabled={isLoading}
-                      className="w-full bg-primary-600 text-white py-2 px-4 rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                      className={`w-full py-3 px-6 rounded-lg font-medium text-lg flex items-center justify-center transition-all duration-200 ${
+                        pkg.isPopular 
+                          ? 'bg-orange-500 text-white hover:bg-orange-600 shadow-lg hover:shadow-xl' 
+                          : 'bg-primary-600 text-white hover:bg-primary-700'
+                      } disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
                       {isLoading ? (
                         <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white ml-2"></div>
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white ml-2"></div>
                           רוכש...
                         </>
                       ) : (
                         <>
-                          <ShoppingCart className="h-4 w-4 ml-2" />
+                          <ShoppingCart className="h-5 w-5 ml-2" />
                           רכוש עכשיו
                         </>
                       )}
@@ -209,16 +212,20 @@ const Packages = () => {
                   ) : (
                     <Link
                       to="/login"
-                      className="w-full bg-primary-600 text-white py-2 px-4 rounded-lg hover:bg-primary-700 flex items-center justify-center"
+                      className={`w-full py-3 px-6 rounded-lg font-medium text-lg flex items-center justify-center transition-all duration-200 ${
+                        pkg.isPopular 
+                          ? 'bg-orange-500 text-white hover:bg-orange-600 shadow-lg hover:shadow-xl' 
+                          : 'bg-primary-600 text-white hover:bg-primary-700'
+                      }`}
                     >
-                      <ShoppingCart className="h-4 w-4 ml-2" />
+                      <ShoppingCart className="h-5 w-5 ml-2" />
                       התחבר לרכישה
                     </Link>
                   )}
                   
                   <Link
                     to="/booking"
-                    className="w-full bg-gray-100 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-200 flex items-center justify-center"
+                    className="w-full bg-gray-600 text-white py-3 px-6 rounded-lg hover:bg-gray-500 flex items-center justify-center font-medium text-lg transition-all duration-200"
                   >
                     הזמן תור
                   </Link>
