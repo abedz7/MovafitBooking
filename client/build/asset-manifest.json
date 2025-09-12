@@ -1,0 +1,14 @@
+{
+  "files": {
+    "main.css": "/static/css/main.4f9ea827.css",
+    "main.js": "/static/js/main.8c5abe86.js",
+    "static/media/Movalogo.png": "/static/media/Movalogo.319cee5cefbe62c93f2b.png",
+    "index.html": "/index.html",
+    "main.4f9ea827.css.map": "/static/css/main.4f9ea827.css.map",
+    "main.8c5abe86.js.map": "/static/js/main.8c5abe86.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.4f9ea827.css",
+    "static/js/main.8c5abe86.js"
+  ]
+}
