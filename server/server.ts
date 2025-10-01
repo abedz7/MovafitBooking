@@ -17,7 +17,10 @@ const PORT = process.env.PORT || 5000;
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:3000', 'https://movafit-booking.vercel.app'],
+  credentials: true
+}));
 app.use(express.json());
 
 // API Routes
