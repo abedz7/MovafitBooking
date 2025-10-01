@@ -14,10 +14,10 @@ function App() {
 
     try {
       // First test if server is accessible
-      const testResponse = await fetch('https://movafit-server.vercel.app/');
+      const testResponse = await fetch('https://movafit-booking-server.vercel.app/');
       console.log('Server test:', testResponse.status);
       
-      const response = await fetch('https://movafit-server.vercel.app/api/users/authenticateUser', {
+      const response = await fetch('https://movafit-booking-server.vercel.app/api/users/authenticateUser', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
