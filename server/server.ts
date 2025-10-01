@@ -3,6 +3,7 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import UsersRouter from './Users/Users.routes';
+import AppointmentsRouter from './Appointments/Appointments.routes';
 
 const uri = process.env.MONGODB_URI;
 console.log("Mongo URI:", uri); // Debug: check if it's loaded
@@ -21,6 +22,7 @@ app.use(express.json());
 
 // API Routes
 app.use('/api/users', UsersRouter);
+app.use('/api/appointments', AppointmentsRouter);
 
 // Basic route
 app.get('/', (req: Request, res: Response) => {
