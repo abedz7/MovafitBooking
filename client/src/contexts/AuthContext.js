@@ -26,51 +26,62 @@ export const AuthProvider = ({ children }) => {
 
   const checkAuthStatus = async () => {
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Mock user data for demo
-      const mockUser = {
-        _id: '1',
-        firstName: 'פאדי',
-        lastName: 'גאבר',
-        email: 'demo@example.com',
-        phone: '0501111111',
-        gender: 'male',
-        role: 'user'
-      };
-      setUser(mockUser);
+      // Get user data from localStorage instead of fetching all users
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        const userData = JSON.parse(storedUser);
+        setUser(userData);
+      }
     } catch (error) {
+      console.error('Auth check error:', error);
       localStorage.removeItem('token');
+      localStorage.removeItem('user');
       setToken(null);
     } finally {
       setLoading(false);
     }
   };
 
-  const login = async (email, password) => {
+  const login = async (phone, password) => {
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock login - accept any email/password for demo
-      const mockUser = {
-        _id: '1',
-        firstName: 'פאדי',
-        lastName: 'גאבר',
-        email: email,
-        phone: '0501111111',
-        gender: 'male',
-        role: 'user'
-      };
-      
-      const mockToken = 'mock-jwt-token-' + Date.now();
-      localStorage.setItem('token', mockToken);
-      setToken(mockToken);
-      setUser(mockUser);
-      toast.success('התחברת בהצלחה!');
-      return true;
+      const response = await fetch('https://movafit-booking-server.vercel.app/api/users/authenticateUser', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ phone, password }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const userData = data.user;
+        
+        const user = {
+          _id: userData._id,
+          fullName: userData.fullName,
+          phone: userData.phone,
+          gender: userData.gender,
+          weight: userData.weight,
+          measurements: userData.measurements,
+          isAdmin: userData.isAdmin,
+          createdAt: userData.createdAt
+        };
+        
+        // Store user data in localStorage
+        localStorage.setItem('user', JSON.stringify(user));
+        setUser(user);
+        
+        const token = 'auth-token-' + Date.now();
+        localStorage.setItem('token', token);
+        setToken(token);
+        toast.success('התחברת בהצלחה!');
+        return true;
+      } else {
+        toast.error('מספר טלפון או סיסמה שגויים');
+        return false;
+      }
     } catch (error) {
+      console.error('Login error:', error);
       toast.error('שגיאה בהתחברות');
       return false;
     }
@@ -106,6 +117,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
     setToken(null);
     setUser(null);
     toast.success('התנתקת בהצלחה');

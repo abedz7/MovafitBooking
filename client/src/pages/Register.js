@@ -2,17 +2,13 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
-import { Eye, EyeOff, User, Phone, ArrowLeft, MessageSquare, CheckCircle } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+import { User, Phone, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const Register = () => {
-  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [generatedPassword, setGeneratedPassword] = useState('');
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [modalPassword, setModalPassword] = useState('');
-  const { register: registerUser, login } = useAuth();
   const navigate = useNavigate();
 
   const {
@@ -26,9 +22,10 @@ const Register = () => {
     setModalPassword(password);
     setShowPasswordModal(true);
     
-    // Auto close modal after 60 seconds
+    // Auto close modal after 60 seconds and redirect to login
     setTimeout(() => {
       setShowPasswordModal(false);
+      navigate('/login');
     }, 60000);
   };
 
@@ -69,30 +66,21 @@ const Register = () => {
       });
 
       const result = await response.json();
+      console.log('Server response:', result);
+      console.log('Response status:', response.status);
       
-      if (response.ok && result.createdUser) {
+      if (response.ok && result.user) {
         // Get the generated password from the response
-        const password = result.password || result.createdUser.password;
-        setGeneratedPassword(password);
+        const password = result.password;
         
-        // Complete registration with backend data
-        const completeUserData = {
-          fullName: data.fullName,
-          phone: data.phone,
-          gender: data.gender,
-          password: password,
-          email: `${data.phone}@movafit.local`
-        };
+        // Show password modal first
+        displayPasswordModal(password);
+        toast.success('החשבון נוצר בהצלחה!');
         
-        const success = await registerUser(completeUserData);
-        if (success) {
-          // Show password modal
-          displayPasswordModal(password);
-          toast.success('החשבון נוצר בהצלחה!');
-          navigate('/dashboard');
-        }
+        // Don't navigate immediately - let user see the modal first
       } else {
-        throw new Error(result.error || 'שגיאה ביצירת המשתמש');
+        console.error('Server error:', result);
+        throw new Error(result.error || result.message || 'שגיאה ביצירת המשתמש');
       }
     } catch (error) {
       console.error('Registration error:', error);
@@ -305,10 +293,13 @@ const Register = () => {
                 </div>
                 
                 <button
-                  onClick={() => setShowPasswordModal(false)}
+                  onClick={() => {
+                    setShowPasswordModal(false);
+                    navigate('/login');
+                  }}
                   className="w-full bg-primary-600 hover:bg-primary-700 text-white py-3 px-4 rounded-lg font-medium transition-colors"
                 >
-                  הבנתי
+                  הבנתי - עבור להתחברות
                 </button>
               </div>
             </motion.div>

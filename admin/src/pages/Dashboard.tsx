@@ -62,16 +62,21 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   const fetchDashboardStats = async () => {
     try {
       setLoading(true);
+      console.log('Fetching dashboard stats...');
       
       // Fetch users count
-      const usersResponse = await fetch('https://movafit-booking-server.vercel.app/api/users/getAllUsers');
+      const usersResponse = await fetch('https://movafit-booking-server.vercel.app/api/users/getAllUsers?t=' + Date.now());
+      console.log('Users response status:', usersResponse.status);
       const usersData = await usersResponse.json();
-      const totalUsers = usersData.Users ? usersData.Users.length : 0;
+      console.log('Users data:', usersData);
+      const totalUsers = usersData.users ? usersData.users.length : 0;
 
       // Fetch appointments
-      const appointmentsResponse = await fetch('https://movafit-booking-server.vercel.app/api/appointments/getAllAppointments');
+      const appointmentsResponse = await fetch('https://movafit-booking-server.vercel.app/api/appointments/getAllAppointments?t=' + Date.now());
+      console.log('Appointments response status:', appointmentsResponse.status);
       const appointmentsData = await appointmentsResponse.json();
-      const appointments = appointmentsData.Appointments || [];
+      console.log('Appointments data:', appointmentsData);
+      const appointments = appointmentsData.appointments || [];
 
       // Calculate stats
       const upcomingAppointments = appointments.filter((apt: any) => apt.status === 'scheduled').length;
@@ -79,6 +84,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       const totalCaloriesBurnt = appointments
         .filter((apt: any) => apt.status === 'completed')
         .reduce((total: number, apt: any) => total + (apt.caloriesBurnt || 0), 0);
+
+      console.log('Calculated stats:', {
+        totalUsers,
+        upcomingAppointments,
+        completedSessions,
+        totalCaloriesBurnt
+      });
 
       setStats({
         totalUsers,
@@ -96,9 +108,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   const fetchUsers = async () => {
     try {
       setUsersLoading(true);
-      const response = await fetch('https://movafit-booking-server.vercel.app/api/users/getAllUsers');
+      console.log('Fetching users...');
+      const response = await fetch('https://movafit-booking-server.vercel.app/api/users/getAllUsers?t=' + Date.now());
+      console.log('Users response status:', response.status);
       const data = await response.json();
-      setUsers(data.Users || []);
+      console.log('Users API response:', data);
+      console.log('Users array:', data.users);
+      setUsers(data.users || []);
     } catch (error) {
       console.error('Error fetching users:', error);
     } finally {
@@ -111,14 +127,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       setAppointmentsLoading(true);
       
       // Fetch appointments
-      const appointmentsResponse = await fetch('https://movafit-booking-server.vercel.app/api/appointments/getAllAppointments');
+      const appointmentsResponse = await fetch('https://movafit-booking-server.vercel.app/api/appointments/getAllAppointments?t=' + Date.now());
       const appointmentsData = await appointmentsResponse.json();
-      const appointmentsList = appointmentsData.Appointments || [];
+      const appointmentsList = appointmentsData.appointments || [];
 
       // Fetch users to get client names
-      const usersResponse = await fetch('https://movafit-booking-server.vercel.app/api/users/getAllUsers');
+      const usersResponse = await fetch('https://movafit-booking-server.vercel.app/api/users/getAllUsers?t=' + Date.now());
       const usersData = await usersResponse.json();
-      const usersList = usersData.Users || [];
+      const usersList = usersData.users || [];
 
       // Combine appointments with user data
       const appointmentsWithUsers = appointmentsList.map((apt: any) => {

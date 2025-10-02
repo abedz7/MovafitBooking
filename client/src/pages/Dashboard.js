@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, Clock, User, Settings, LogOut, Plus, Edit, Trash2, Eye } from 'lucide-react';
+import { Calendar, Clock, User, Settings, LogOut, Plus, Trash2, Eye } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useBooking } from '../contexts/BookingContext';
 import { Link } from 'react-router-dom';
@@ -13,8 +13,8 @@ const Dashboard = () => {
   const [selectedAppointment, setSelectedAppointment] = useState(null);
 
   useEffect(() => {
-    if (user) {
-      fetchAppointments();
+    if (user && user._id) {
+      fetchAppointments(user._id);
     }
   }, [user, fetchAppointments]);
 
@@ -34,7 +34,6 @@ const Dashboard = () => {
     apt.status === 'scheduled' || apt.status === 'confirmed'
   ).slice(0, 3);
 
-  const recentAppointments = appointments.slice(0, 5);
 
   const stats = {
     total: appointments.length,
@@ -85,7 +84,7 @@ const Dashboard = () => {
           className="mb-8"
         >
           <h1 className="text-3xl font-bold text-white mb-2">
-            שלום, {user?.firstName}!
+            שלום, {user?.fullName}!
           </h1>
           <p className="text-gray-300">ברוכים הבאים לפאנל הניהול שלכם</p>
         </motion.div>
@@ -141,6 +140,66 @@ const Dashboard = () => {
               <div className="mr-4">
                 <p className="text-sm font-medium text-gray-300">בוטלו</p>
                 <p className="text-2xl font-bold text-white">{stats.cancelled}</p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* User Profile Info */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="bg-gray-800 rounded-lg shadow p-6 mb-8"
+        >
+          <h2 className="text-xl font-semibold text-white mb-4">פרטי הפרופיל שלך</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-gray-700 rounded-lg p-4">
+              <div className="flex items-center">
+                <User className="h-5 w-5 text-blue-400 ml-2" />
+                <div>
+                  <p className="text-sm font-medium text-gray-300">שם מלא</p>
+                  <p className="text-lg font-bold text-white">{user?.fullName || 'לא זמין'}</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-gray-700 rounded-lg p-4">
+              <div className="flex items-center">
+                <Settings className="h-5 w-5 text-green-400 ml-2" />
+                <div>
+                  <p className="text-sm font-medium text-gray-300">משקל</p>
+                  <p className="text-lg font-bold text-white">
+                    {user?.weight ? `${user.weight} ק"ג` : 'לא עודכן'}
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-gray-700 rounded-lg p-4">
+              <div className="flex items-center">
+                <Calendar className="h-5 w-5 text-purple-400 ml-2" />
+                <div>
+                  <p className="text-sm font-medium text-gray-300">מידות</p>
+                  <p className="text-sm text-white">
+                    {user?.measurements ? 
+                      `חזה: ${user.measurements.chest || 'N/A'} | מותן: ${user.measurements.waist || 'N/A'} | ירכיים: ${user.measurements.hips || 'N/A'}` 
+                      : 'לא עודכן'
+                    }
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-gray-700 rounded-lg p-4">
+              <div className="flex items-center">
+                <Clock className="h-5 w-5 text-orange-400 ml-2" />
+                <div>
+                  <p className="text-sm font-medium text-gray-300">תאריך הצטרפות</p>
+                  <p className="text-sm text-white">
+                    {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('he-IL') : 'לא זמין'}
+                  </p>
+                </div>
               </div>
             </div>
           </div>

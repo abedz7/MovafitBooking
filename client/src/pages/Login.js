@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
-import { Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react';
+import { Eye, EyeOff, Phone, Lock, ArrowRight } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 const Login = () => {
@@ -20,26 +20,38 @@ const Login = () => {
   const onSubmit = async (data) => {
     setIsLoading(true);
     try {
-      const success = await login(data.email, data.password);
-      if (success) {
-        navigate('/dashboard');
+      // Call backend authentication
+      const response = await fetch('https://movafit-booking-server.vercel.app/api/users/authenticateUser', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          phone: data.phone,
+          password: data.password
+        })
+      });
+
+      const result = await response.json();
+      console.log('Login response:', result);
+
+      if (response.ok && result.message === 'Authentication successful') {
+        // Use local login to set user session
+        const success = await login(data.phone, data.password);
+        if (success) {
+          navigate('/dashboard');
+        }
+      } else {
+        throw new Error(result.error || 'שגיאה בהתחברות');
       }
+    } catch (error) {
+      console.error('Login error:', error);
+      alert(error.message || 'שגיאה בהתחברות');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleDemoLogin = async () => {
-    setIsLoading(true);
-    try {
-      const success = await login('demo@example.com', 'demo123');
-      if (success) {
-        navigate('/dashboard');
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -69,41 +81,41 @@ const Login = () => {
           onSubmit={handleSubmit(onSubmit)}
         >
           <div className="space-y-4">
-            {/* Email Field */}
+            {/* Phone Field */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
-                כתובת אימייל
+              <label htmlFor="phone" className="block text-sm font-medium text-gray-300 mb-2">
+                מספר טלפון
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
+                  <Phone className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
-                  id="email"
-                  type="email"
-                  autoComplete="email"
-                  {...register('email', {
-                    required: 'כתובת האימייל נדרשת',
+                  id="phone"
+                  type="tel"
+                  autoComplete="tel"
+                  {...register('phone', {
+                    required: 'מספר הטלפון נדרש',
                     pattern: {
-                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: 'כתובת אימייל לא תקינה'
+                      value: /^05\d{8}$/,
+                      message: 'מספר טלפון לא תקין (05X-XXXXXXX)'
                     }
                   })}
                   className={`block w-full pr-10 pl-3 py-3 border rounded-lg text-right transition-colors bg-gray-800 text-white placeholder-gray-400 ${
-                    errors.email
+                    errors.phone
                       ? 'border-red-400 focus:border-red-300 focus:ring-red-500'
                       : 'border-gray-600 focus:border-primary-400 focus:ring-primary-500'
                   } focus:outline-none focus:ring-2 focus:ring-opacity-50`}
-                  placeholder="הכנס את כתובת האימייל שלך"
+                  placeholder="05X-XXXXXXX"
                 />
               </div>
-              {errors.email && (
+              {errors.phone && (
                 <motion.p
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="mt-1 text-sm text-red-600 text-right"
                 >
-                  {errors.email.message}
+                  {errors.phone.message}
                 </motion.p>
               )}
             </div>
@@ -172,13 +184,13 @@ const Login = () => {
               </label>
             </div>
             <div className="text-sm">
-              <a href="#" className="font-medium text-primary-400 hover:text-primary-300">
+              <button type="button" className="font-medium text-primary-400 hover:text-primary-300">
                 שכחת סיסמה?
-              </a>
+              </button>
             </div>
           </div>
 
-          <div className="space-y-3">
+          <div>
             <button
               type="submit"
               disabled={isLoading}
@@ -191,19 +203,6 @@ const Login = () => {
                   התחבר
                   <ArrowRight className="mr-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                 </>
-              )}
-            </button>
-            
-            <button
-              type="button"
-              onClick={handleDemoLogin}
-              disabled={isLoading}
-              className="w-full flex justify-center py-3 px-4 border border-primary-400 text-sm font-medium rounded-lg text-primary-400 bg-transparent hover:bg-primary-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {isLoading ? (
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary-400"></div>
-              ) : (
-                'התחבר כדמו (Demo Login)'
               )}
             </button>
           </div>

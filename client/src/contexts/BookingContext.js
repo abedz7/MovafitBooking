@@ -63,27 +63,6 @@ const mockPackages = [
   }
 ];
 
-const mockAppointments = [
-  {
-    _id: '1',
-    date: '2024-01-20',
-    time: '10:00',
-    status: 'scheduled',
-    type: 'single',
-    notes: 'כאבי גב'
-  },
-  {
-    _id: '2',
-    date: '2024-01-22',
-    time: '14:30',
-    status: 'confirmed',
-    type: 'package',
-    package: {
-      _id: '2',
-      name: 'חבילת עיסוי רפואי פרימיום'
-    }
-  }
-];
 
 export const BookingProvider = ({ children }) => {
   const { token } = useAuth();
@@ -95,17 +74,37 @@ export const BookingProvider = ({ children }) => {
   useEffect(() => {
     fetchPackages(); // Always fetch packages (no auth required)
     if (token) {
-      fetchAppointments();
+      // We need to get user ID from AuthContext, but we can't use useAuth here
+      // So we'll fetch appointments when the Dashboard component calls it
     }
   }, [token]);
 
-  const fetchAppointments = async () => {
+  const fetchAppointments = async (userId) => {
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      setAppointments(mockAppointments);
+      setLoading(true);
+      if (!userId) {
+        console.log('No user ID provided, skipping appointments fetch');
+        setAppointments([]);
+        return;
+      }
+      
+      console.log('Fetching appointments for user:', userId);
+      const response = await fetch(`https://movafit-booking-server.vercel.app/api/appointments/getAppointmentsByUserId/${userId}`);
+      console.log('Response status:', response.status);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('User appointments data:', data);
+        setAppointments(data.appointments || []);
+      } else {
+        console.error('Failed to fetch user appointments, status:', response.status);
+        setAppointments([]);
+      }
     } catch (error) {
-      console.error('Error fetching appointments:', error);
+      console.error('Error fetching user appointments:', error);
+      setAppointments([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -146,21 +145,25 @@ export const BookingProvider = ({ children }) => {
   const bookAppointment = async (bookingData) => {
     try {
       setLoading(true);
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Create new appointment with mock data
-      const newAppointment = {
-        _id: Date.now().toString(),
-        ...bookingData,
-        status: 'scheduled',
-        createdAt: new Date().toISOString()
-      };
-      
-      setAppointments(prev => [...prev, newAppointment]);
-      toast.success('התור נקבע בהצלחה!');
-      return true;
+      const response = await fetch('https://movafit-booking-server.vercel.app/api/appointments/createAppointment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(bookingData),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setAppointments(prev => [...prev, data.appointment]);
+        toast.success('התור נקבע בהצלחה!');
+        return true;
+      } else {
+        toast.error('שגיאה בקביעת התור');
+        return false;
+      }
     } catch (error) {
+      console.error('Error booking appointment:', error);
       toast.error('שגיאה בקביעת התור');
       return false;
     } finally {
@@ -170,13 +173,23 @@ export const BookingProvider = ({ children }) => {
 
   const cancelAppointment = async (appointmentId) => {
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      setAppointments(prev => prev.filter(apt => apt._id !== appointmentId));
-      toast.success('התור בוטל בהצלחה');
-      return true;
+      const response = await fetch(`https://movafit-booking-server.vercel.app/api/appointments/cancelAppointment/${appointmentId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        setAppointments(prev => prev.filter(apt => apt._id !== appointmentId));
+        toast.success('התור בוטל בהצלחה');
+        return true;
+      } else {
+        toast.error('שגיאה בביטול התור');
+        return false;
+      }
     } catch (error) {
+      console.error('Error cancelling appointment:', error);
       toast.error('שגיאה בביטול התור');
       return false;
     }
