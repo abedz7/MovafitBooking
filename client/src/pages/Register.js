@@ -7,11 +7,11 @@ import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
 
 const Register = () => {
-  const [currentStep, setCurrentStep] = useState(1);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [userData, setUserData] = useState(null);
   const [generatedPassword, setGeneratedPassword] = useState('');
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [modalPassword, setModalPassword] = useState('');
   const { register: registerUser, login } = useAuth();
   const navigate = useNavigate();
 
@@ -21,86 +21,87 @@ const Register = () => {
     formState: { errors },
   } = useForm();
 
-  // Generate random password
-  const generatePassword = () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let result = '';
-    for (let i = 0; i < 8; i++) {
-      result += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return result;
+  // Show password modal
+  const displayPasswordModal = (password) => {
+    setModalPassword(password);
+    setShowPasswordModal(true);
+    
+    // Auto close modal after 60 seconds
+    setTimeout(() => {
+      setShowPasswordModal(false);
+    }, 60000);
   };
 
-  // Step 1: Personal details submission
-  const onSubmitStep1 = async (data) => {
-    setIsLoading(true);
+  // Copy password to clipboard
+  const copyPassword = async () => {
     try {
-      // Generate password
-      const password = generatePassword();
-      setGeneratedPassword(password);
-      
-      // Store user data
-      setUserData(data);
-      
-      // Simulate sending password via WhatsApp
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Show password to user and open WhatsApp
-      toast.success(`הסיסמה שלך: ${password} - אנא העתק אותה`);
-      
-      // Open WhatsApp with a message to the clinic
-      const message = `שלום, אני ${data.fullName} (${data.phone}) ואני רוצה להירשם למערכת. אנא שלחו לי את הסיסמה.`;
-      const clinicPhone = '0527771621';
-      const url = `https://wa.me/972${clinicPhone.replace('0', '')}?text=${encodeURIComponent(message)}`;
-      window.open(url, '_blank');
-      
-      // Move to step 2
-      setCurrentStep(2);
+      await navigator.clipboard.writeText(modalPassword);
+      toast.success('הסיסמה הועתקה ללוח!');
     } catch (error) {
-      toast.error('שגיאה בשליחת הסיסמה');
-    } finally {
-      setIsLoading(false);
+      toast.error('שגיאה בהעתקת הסיסמה');
     }
   };
 
-  // Step 2: Password validation
-  const onSubmitStep2 = async (data) => {
+  // Single step registration
+  const onSubmit = async (data) => {
     setIsLoading(true);
     try {
-      if (data.password === generatedPassword) {
-        // Complete registration
+      // Call backend to create user and get password
+      const response = await fetch('https://movafit-booking-server.vercel.app/api/users/createUser', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fullName: data.fullName,
+          phone: data.phone,
+          gender: data.gender,
+          isAdmin: false,
+          weight: null,
+          measurements: {
+            chest: null,
+            waist: null,
+            hips: null,
+            lastUpdated: null
+          },
+          isActive: true
+        })
+      });
+
+      const result = await response.json();
+      
+      if (response.ok && result.createdUser) {
+        // Get the generated password from the response
+        const password = result.password || result.createdUser.password;
+        setGeneratedPassword(password);
+        
+        // Complete registration with backend data
         const completeUserData = {
-          ...userData,
-          password: generatedPassword,
-          email: `${userData.phone}@movafit.local` // Generate email from phone
+          fullName: data.fullName,
+          phone: data.phone,
+          gender: data.gender,
+          password: password,
+          email: `${data.phone}@movafit.local`
         };
         
         const success = await registerUser(completeUserData);
         if (success) {
+          // Show password modal
+          displayPasswordModal(password);
           toast.success('החשבון נוצר בהצלחה!');
           navigate('/dashboard');
         }
       } else {
-        toast.error('הסיסמה שגויה. אנא בדוק את ההודעה בווטסאפ');
+        throw new Error(result.error || 'שגיאה ביצירת המשתמש');
       }
     } catch (error) {
-      toast.error('שגיאה ביצירת החשבון');
+      console.error('Registration error:', error);
+      toast.error(error.message || 'שגיאה ביצירת המשתמש');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleDemoLogin = async () => {
-    setIsLoading(true);
-    try {
-      const success = await login('demo@example.com', 'demo123');
-      if (success) {
-        navigate('/dashboard');
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 py-12 px-4 sm:px-6 lg:px-8">
@@ -115,38 +116,21 @@ const Register = () => {
             <span className="text-white font-bold text-2xl">M</span>
           </div>
           <h2 className="text-3xl font-bold text-white mb-2">
-            {currentStep === 1 ? 'יצירת חשבון חדש' : 'אימות סיסמה'}
+            יצירת חשבון חדש
           </h2>
           <p className="text-gray-300">
-            {currentStep === 1 
-              ? 'הירשם למערכת שלנו וקבל גישה להזמנת תורים מתקדמת'
-              : 'הזן את הסיסמה שקיבלת בווטסאפ'
-            }
+            הירשם למערכת שלנו וקבל גישה להזמנת תורים מתקדמת
           </p>
         </div>
 
-        {/* Progress Steps */}
-        <div className="flex items-center justify-center mb-8">
-          <div className="flex items-center space-x-4">
-            <div className={`flex items-center justify-center w-8 h-8 rounded-full ${currentStep >= 1 ? 'bg-primary-600' : 'bg-gray-600'}`}>
-              <span className="text-white text-sm font-bold">1</span>
-            </div>
-            <div className={`w-16 h-1 ${currentStep >= 2 ? 'bg-primary-600' : 'bg-gray-600'}`}></div>
-            <div className={`flex items-center justify-center w-8 h-8 rounded-full ${currentStep >= 2 ? 'bg-primary-600' : 'bg-gray-600'}`}>
-              <span className="text-white text-sm font-bold">2</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Step 1: Personal Details */}
-        {currentStep === 1 && (
-          <motion.form
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-            className="mt-8 space-y-6"
-            onSubmit={handleSubmit(onSubmitStep1)}
-          >
+        {/* Registration Form */}
+        <motion.form
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.2 }}
+          className="mt-8 space-y-6"
+          onSubmit={handleSubmit(onSubmit)}
+        >
             <div className="space-y-4">
               {/* Full Name */}
               <div>
@@ -268,22 +252,9 @@ const Register = () => {
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                 ) : (
                   <>
-                    שלח סיסמה לווטסאפ
-                    <MessageSquare className="mr-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                    הירשם עכשיו
+                    <CheckCircle className="mr-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                   </>
-                )}
-              </button>
-              
-              <button
-                type="button"
-                onClick={handleDemoLogin}
-                disabled={isLoading}
-                className="w-full flex justify-center py-3 px-4 border border-primary-400 text-sm font-medium rounded-lg text-primary-400 bg-transparent hover:bg-primary-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {isLoading ? (
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary-400"></div>
-                ) : (
-                  'התחבר כדמו (Demo Login)'
                 )}
               </button>
             </div>
@@ -300,102 +271,48 @@ const Register = () => {
               </p>
             </div>
           </motion.form>
-        )}
 
-        {/* Step 2: Password Validation */}
-        {currentStep === 2 && (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-            className="mt-8 space-y-6"
-          >
-            <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4 mb-6">
-              <div className="flex items-center">
-                <MessageSquare className="h-5 w-5 text-blue-400 ml-2" />
-                <p className="text-blue-300 text-sm">
-                  שלחת הודעה למרפאה בווטסאפ. המרפאה תשלח לך את הסיסמה. אנא בדוק את ההודעה והזן את הסיסמה כאן.
-                </p>
-              </div>
-            </div>
-
-            <form onSubmit={handleSubmit(onSubmitStep2)} className="space-y-6">
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
-                  הסיסמה שקיבלת בווטסאפ *
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                    <MessageSquare className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    autoComplete="off"
-                    {...register('password', {
-                      required: 'הסיסמה נדרשת',
-                      minLength: {
-                        value: 6,
-                        message: 'הסיסמה חייבת להכיל לפחות 6 תווים'
-                      }
-                    })}
-                    className={`block w-full pr-10 pl-3 py-3 border rounded-lg text-right transition-colors bg-gray-800 text-white placeholder-gray-400 ${
-                      errors.password
-                        ? 'border-red-400 focus:border-red-300 focus:ring-red-500'
-                        : 'border-gray-600 focus:border-primary-400 focus:ring-primary-500'
-                    } focus:outline-none focus:ring-2 focus:ring-opacity-50`}
-                    placeholder="הזן את הסיסמה שקיבלת"
-                  />
-                  <button
-                    type="button"
-                    className="absolute inset-y-0 left-0 pl-3 flex items-center"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                    ) : (
-                      <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                    )}
-                  </button>
+        {/* Password Modal */}
+        {showPasswordModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4"
+            >
+              <div className="text-center">
+                <div className="mx-auto h-12 w-12 bg-green-500 rounded-full flex items-center justify-center mb-4">
+                  <CheckCircle className="h-6 w-6 text-white" />
                 </div>
-                {errors.password && (
-                  <motion.p
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mt-1 text-sm text-red-400 text-right"
-                  >
-                    {errors.password.message}
-                  </motion.p>
-                )}
-              </div>
-
-              <div className="flex space-x-4">
-                <button
-                  type="button"
-                  onClick={() => setCurrentStep(1)}
-                  className="flex-1 flex items-center justify-center py-3 px-4 border border-gray-600 text-sm font-medium rounded-lg text-gray-300 bg-transparent hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
-                >
-                  <ArrowLeft className="ml-2 h-5 w-5" />
-                  חזור
-                </button>
+                <h3 className="text-xl font-bold text-white mb-2">הסיסמה שלך</h3>
+                <p className="text-gray-300 mb-4">החשבון נוצר בהצלחה! שמור את הסיסמה במקום בטוח</p>
+                
+                <div className="bg-gray-700 rounded-lg p-4 mb-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-2xl font-mono text-white font-bold">{modalPassword}</span>
+                    <button
+                      onClick={copyPassword}
+                      className="bg-primary-600 hover:bg-primary-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                    >
+                      העתק
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="text-sm text-gray-400 mb-4">
+                  <p>המודל הזה ייסגר אוטומטית בעוד 60 שניות</p>
+                </div>
                 
                 <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="flex-1 flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  onClick={() => setShowPasswordModal(false)}
+                  className="w-full bg-primary-600 hover:bg-primary-700 text-white py-3 px-4 rounded-lg font-medium transition-colors"
                 >
-                  {isLoading ? (
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  ) : (
-                    <>
-                      השלם הרשמה
-                      <CheckCircle className="mr-2 h-5 w-5" />
-                    </>
-                  )}
+                  הבנתי
                 </button>
               </div>
-            </form>
-          </motion.div>
+            </motion.div>
+          </div>
         )}
       </motion.div>
     </div>
