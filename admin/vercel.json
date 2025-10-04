@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "buildCommand": "npm install --legacy-peer-deps --force && npm run build",
+  "buildCommand": "yarn install && GENERATE_SOURCEMAP=false yarn build",
   "outputDirectory": "build",
-  "installCommand": "npm install --legacy-peer-deps --force",
+  "installCommand": "yarn install",
   "framework": "create-react-app",
   "env": {
     "GENERATE_SOURCEMAP": "false"
