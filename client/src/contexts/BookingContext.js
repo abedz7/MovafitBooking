@@ -68,7 +68,6 @@ export const BookingProvider = ({ children }) => {
   const { token } = useAuth();
   const [appointments, setAppointments] = useState([]);
   const [packages, setPackages] = useState([]);
-  const [availableSlots, setAvailableSlots] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -120,25 +119,62 @@ export const BookingProvider = ({ children }) => {
 
   const getAvailableSlots = async (date, gender) => {
     try {
-      setLoading(true);
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 200));
+      // Get day of week to determine available hours
+      const dateObj = new Date(date);
+      const dayOfWeek = dateObj.getDay(); // 0 = Sunday, 1 = Monday, etc.
+      const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+      const dayName = days[dayOfWeek];
       
-      // Mock available time slots
-      const timeSlots = [
-        '08:00', '08:30', '09:00', '09:30', '10:00', '10:30',
-        '11:00', '11:30', '12:00', '12:30', '13:00', '13:30',
-        '14:00', '14:30', '15:00', '15:30', '16:00', '16:30',
-        '17:00', '17:30', '18:00', '18:30', '19:00', '19:30'
-      ];
+      let possibleHours = [];
       
-      // Randomly remove some slots to simulate availability
-      const availableSlots = timeSlots.filter(() => Math.random() > 0.3);
-      setAvailableSlots(availableSlots);
+      if (gender === 'male') {
+        if (dayName === 'monday') {
+          // Monday: 4pm-9pm (16:00-21:00)
+          possibleHours = ['16:00', '17:00', '18:00', '19:00', '20:00', '21:00'];
+        } else if (dayName === 'wednesday' || dayName === 'saturday') {
+          // Wednesday & Saturday: 9am-8pm (09:00-20:00)
+          possibleHours = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00'];
+        }
+      } else if (gender === 'female') {
+        if (['sunday', 'tuesday', 'thursday', 'friday'].includes(dayName)) {
+          // All women days: 9am-8pm (09:00-20:00)
+          possibleHours = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00'];
+        }
+      }
+      
+      // If no possible hours for this day/gender, return empty
+      if (possibleHours.length === 0) {
+        console.log('No possible hours for', date, '(', dayName, '), gender:', gender);
+        return [];
+      }
+      
+      // Now check server for existing bookings on this date
+      console.log('Checking existing bookings for', date, 'gender:', gender);
+      const response = await fetch(`https://movafit-booking-server.vercel.app/api/appointments/getAppointmentsByDate/${date}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        const existingAppointments = data.appointments || [];
+        
+        // Get list of already booked times
+        const bookedTimes = existingAppointments.map(apt => apt.time);
+        console.log('Booked times for', date, ':', bookedTimes);
+        
+        // Filter out booked times from possible hours
+        const availableSlots = possibleHours.filter(hour => !bookedTimes.includes(hour));
+        
+        console.log('Available hours for', date, '(', dayName, '), gender:', gender, 'available slots:', availableSlots);
+        return availableSlots;
+      } else {
+        console.log('Server error, returning all possible hours');
+        // If server error, return all possible hours (fallback)
+        return possibleHours;
+      }
+      
     } catch (error) {
+      console.error('Error fetching available slots:', error);
       toast.error('שגיאה בטעינת הזמנים הזמינים');
-    } finally {
-      setLoading(false);
+      return [];
     }
   };
 
@@ -232,7 +268,6 @@ export const BookingProvider = ({ children }) => {
   const value = {
     appointments,
     packages,
-    availableSlots,
     loading,
     getAvailableSlots,
     bookAppointment,
@@ -249,3 +284,4 @@ export const BookingProvider = ({ children }) => {
     </BookingContext.Provider>
   );
 };
+

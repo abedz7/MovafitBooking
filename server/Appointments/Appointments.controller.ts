@@ -78,6 +78,32 @@ export async function getAppointmentsByUserId(req: Request, res: Response) {
 }
 
 /**
+ * Retrieves appointments by date.
+ */
+export async function getAppointmentsByDate(req: Request, res: Response) {
+    try {
+        const { date } = req.params;
+
+        if (!date) {
+            return res.status(400).json({ error: 'Date is required' });
+        }
+
+        // Validate date format (YYYY-MM-DD)
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!dateRegex.test(date)) {
+            return res.status(400).json({ error: 'Invalid date format. Use YYYY-MM-DD' });
+        }
+
+        const appointments = await getByDate(date);
+
+        res.status(200).json({ appointments });
+    } catch (error) {
+        console.error('Error fetching appointments by date:', error);
+        res.status(500).json({ error: 'An error occurred while retrieving appointments' });
+    }
+}
+
+/**
  * Creates a new appointment in the database.
  */
 export async function createAppointment(req: Request, res: Response) {

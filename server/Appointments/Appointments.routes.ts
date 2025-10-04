@@ -2,7 +2,8 @@ import { Router } from 'express';
 import { 
     getAllAppointments, 
     getAppointmentById, 
-    getAppointmentsByUserId, 
+    getAppointmentsByUserId,
+    getAppointmentsByDate,
     createAppointment, 
     updateAppointment, 
     deleteAppointment, 
@@ -24,6 +25,9 @@ AppointmentsRouter.get('/getAppointmentById/:id', getAppointmentById);
 
 // Retrieve appointments by user ID
 AppointmentsRouter.get('/getAppointmentsByUserId/:userId', getAppointmentsByUserId);
+
+// Retrieve appointments by date
+AppointmentsRouter.get('/getAppointmentsByDate/:date', getAppointmentsByDate);
 
 // Create a new appointment
 AppointmentsRouter.post('/createAppointment', createAppointment);

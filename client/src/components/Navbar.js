@@ -95,7 +95,7 @@ const Navbar = () => {
             {isAuthenticated ? (
               <div className="flex items-center space-x-3 space-x-reverse">
                 <span className="text-sm text-gray-300">
-                  שלום, {user?.firstName}
+                  שלום, {user?.fullName}
                 </span>
                 <button
                   onClick={handleLogout}
@@ -183,7 +183,7 @@ const Navbar = () => {
               {isAuthenticated ? (
                 <div className="pt-4 border-t border-gray-700">
                   <div className="px-3 py-2 text-sm text-gray-300">
-                    שלום, {user?.firstName}
+                    שלום, {user?.fullName}
                   </div>
                   <button
                     onClick={handleLogout}
