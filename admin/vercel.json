@@ -1,7 +1,4 @@
 {
-  "version": 2,
-  "buildCommand": "echo 'Deploying static files'",
-  "outputDirectory": "dist",
-  "framework": null,
-  "installCommand": "echo 'No dependencies needed for static deployment'"
+  "buildCommand": "npm run build",
+  "outputDirectory": "build"
 }
