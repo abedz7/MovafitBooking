@@ -1,46 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Package, Star, Check, ShoppingCart, Zap, Clock, Flame } from 'lucide-react';
+import { Package, Star, Check, Zap, Clock, Flame } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useBooking } from '../contexts/BookingContext';
 import { Link } from 'react-router-dom';
-import toast from 'react-hot-toast';
 
 const Packages = () => {
   const { user } = useAuth();
-  const { packages, fetchPackages, purchasePackage, loading } = useBooking();
-
-
-  const [isLoading, setIsLoading] = useState(false);
+  const { packages, fetchPackages, loading } = useBooking();
 
   useEffect(() => {
     fetchPackages();
   }, [fetchPackages]);
 
-
-
   const filteredPackages = packages.filter(pkg => {
     const matchesUserGender = pkg.gender === 'both' || pkg.gender === user?.gender;
     return matchesUserGender;
   });
-
-  const handlePurchasePackage = async (packageId) => {
-    if (!user) {
-      toast.error('יש להתחבר כדי לרכוש חבילה');
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      await purchasePackage(packageId);
-      toast.success('החבילה נרכשה בהצלחה!');
-    } catch (error) {
-      console.error('Error purchasing package:', error);
-      toast.error('שגיאה ברכישת החבילה');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
 
   const getGenderLabel = (gender) => {
@@ -162,13 +138,9 @@ const Packages = () => {
                     <span>מספר מפגשים:</span>
                     <span className="font-medium text-white text-lg">{pkg.numberOfSessions}</span>
                   </div>
-                  <div className="flex items-center justify-between text-sm text-gray-300 mb-3">
+                  <div className="flex items-center justify-between text-sm text-gray-300">
                     <span>מתאים ל:</span>
                     <span className="font-medium text-white">{getGenderLabel(pkg.gender)}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm text-gray-300">
-                    <span>תקופת תוקף:</span>
-                    <span className="font-medium text-white">{pkg.validityDays} ימים</span>
                   </div>
                 </div>
 
@@ -186,50 +158,6 @@ const Packages = () => {
                   </div>
                 )}
 
-                <div className="space-y-3">
-                  {user ? (
-                    <button
-                      onClick={() => handlePurchasePackage(pkg._id)}
-                      disabled={isLoading}
-                      className={`w-full py-3 px-6 rounded-lg font-medium text-lg flex items-center justify-center transition-all duration-200 ${
-                        pkg.isPopular 
-                          ? 'bg-orange-500 text-white hover:bg-orange-600 shadow-lg hover:shadow-xl' 
-                          : 'bg-primary-600 text-white hover:bg-primary-700'
-                      } disabled:opacity-50 disabled:cursor-not-allowed`}
-                    >
-                      {isLoading ? (
-                        <>
-                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white ml-2"></div>
-                          רוכש...
-                        </>
-                      ) : (
-                        <>
-                          <ShoppingCart className="h-5 w-5 ml-2" />
-                          רכוש עכשיו
-                        </>
-                      )}
-                    </button>
-                  ) : (
-                    <Link
-                      to="/login"
-                      className={`w-full py-3 px-6 rounded-lg font-medium text-lg flex items-center justify-center transition-all duration-200 ${
-                        pkg.isPopular 
-                          ? 'bg-orange-500 text-white hover:bg-orange-600 shadow-lg hover:shadow-xl' 
-                          : 'bg-primary-600 text-white hover:bg-primary-700'
-                      }`}
-                    >
-                      <ShoppingCart className="h-5 w-5 ml-2" />
-                      התחבר לרכישה
-                    </Link>
-                  )}
-                  
-                  <Link
-                    to="/booking"
-                    className="w-full bg-gray-600 text-white py-3 px-6 rounded-lg hover:bg-gray-500 flex items-center justify-center font-medium text-lg transition-all duration-200"
-                  >
-                    הזמן תור
-                  </Link>
-                </div>
               </motion.div>
             ))
           ) : (
@@ -245,6 +173,35 @@ const Packages = () => {
           )}
         </motion.div>
 
+        {/* Single Book Now Button */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="text-center mt-12"
+        >
+          {user ? (
+            <Link
+              to="/booking"
+              className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white text-xl font-bold rounded-lg hover:from-orange-600 hover:to-red-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+            >
+              <Zap className="h-6 w-6 ml-3" />
+              הזמן תור עכשיו
+            </Link>
+          ) : (
+            <Link
+              to="/login"
+              className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white text-xl font-bold rounded-lg hover:from-orange-600 hover:to-red-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+            >
+              <Zap className="h-6 w-6 ml-3" />
+              התחבר והזמן תור
+            </Link>
+          )}
+          
+          <p className="text-gray-400 mt-4 text-sm">
+            {user ? 'לחץ כאן כדי להזמין תור לטיפול' : 'יש להתחבר כדי להזמין תור'}
+          </p>
+        </motion.div>
 
       </div>
     </div>

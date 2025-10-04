@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import './Dashboard.css';
 
 interface DashboardProps {
@@ -54,43 +54,74 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   const [usersLoading, setUsersLoading] = useState(false);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [appointmentsLoading, setAppointmentsLoading] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [newStatus, setNewStatus] = useState<'completed' | 'cancelled'>('completed');
+  const [measurements, setMeasurements] = useState({
+    weight: '',
+    chest: '',
+    waist: '',
+    hips: '',
+    caloriesBurnt: '',
+    notes: ''
+  });
+  const [updating, setUpdating] = useState(false);
+  const [lastFetchTime, setLastFetchTime] = useState({
+    users: 0,
+    appointments: 0,
+    stats: 0
+  });
 
-  useEffect(() => {
-    fetchDashboardStats();
-  }, []);
+  const fetchDashboardStats = useCallback(async (forceRefresh = false) => {
+    // Cache for 30 seconds
+    const now = Date.now();
+    if (!forceRefresh && now - lastFetchTime.stats < 30000) {
+      return;
+    }
 
-  const fetchDashboardStats = async () => {
     try {
       setLoading(true);
-      console.log('Fetching dashboard stats...');
       
-      // Fetch users count
-      const usersResponse = await fetch('https://movafit-booking-server.vercel.app/api/users/getAllUsers?t=' + Date.now());
-      console.log('Users response status:', usersResponse.status);
-      const usersData = await usersResponse.json();
-      console.log('Users data:', usersData);
-      const totalUsers = usersData.users ? usersData.users.length : 0;
+      // Use cached data if available and recent
+      if (users.length > 0 && appointments.length > 0 && !forceRefresh) {
+        const totalUsers = users.length;
+        const upcomingAppointments = appointments.filter((apt: any) => apt.status === 'scheduled').length;
+        const completedSessions = appointments.filter((apt: any) => apt.status === 'completed').length;
+        const totalCaloriesBurnt = appointments
+          .filter((apt: any) => apt.status === 'completed')
+          .reduce((total: number, apt: any) => total + (apt.caloriesBurnt || 0), 0);
 
-      // Fetch appointments
-      const appointmentsResponse = await fetch('https://movafit-booking-server.vercel.app/api/appointments/getAllAppointments?t=' + Date.now());
-      console.log('Appointments response status:', appointmentsResponse.status);
-      const appointmentsData = await appointmentsResponse.json();
-      console.log('Appointments data:', appointmentsData);
-      const appointments = appointmentsData.appointments || [];
+        setStats({
+          totalUsers,
+          upcomingAppointments,
+          completedSessions,
+          totalCaloriesBurnt
+        });
+        setLastFetchTime(prev => ({ ...prev, stats: now }));
+        setLoading(false);
+        return;
+      }
+
+      // Fetch fresh data only if needed
+      const [usersResponse, appointmentsResponse] = await Promise.all([
+        fetch('https://movafit-booking-server.vercel.app/api/users/getAllUsers'),
+        fetch('https://movafit-booking-server.vercel.app/api/appointments/getAllAppointments')
+      ]);
+
+      const [usersData, appointmentsData] = await Promise.all([
+        usersResponse.json(),
+        appointmentsResponse.json()
+      ]);
+
+      const totalUsers = usersData.users ? usersData.users.length : 0;
+      const appointmentsList = appointmentsData.appointments || [];
 
       // Calculate stats
-      const upcomingAppointments = appointments.filter((apt: any) => apt.status === 'scheduled').length;
-      const completedSessions = appointments.filter((apt: any) => apt.status === 'completed').length;
-      const totalCaloriesBurnt = appointments
+      const upcomingAppointments = appointmentsList.filter((apt: any) => apt.status === 'scheduled').length;
+      const completedSessions = appointmentsList.filter((apt: any) => apt.status === 'completed').length;
+      const totalCaloriesBurnt = appointmentsList
         .filter((apt: any) => apt.status === 'completed')
         .reduce((total: number, apt: any) => total + (apt.caloriesBurnt || 0), 0);
-
-      console.log('Calculated stats:', {
-        totalUsers,
-        upcomingAppointments,
-        completedSessions,
-        totalCaloriesBurnt
-      });
 
       setStats({
         totalUsers,
@@ -98,43 +129,68 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         completedSessions,
         totalCaloriesBurnt
       });
+      setLastFetchTime(prev => ({ ...prev, stats: now }));
     } catch (error) {
-      console.error('Error fetching dashboard stats:', error);
+      // Silent error handling
     } finally {
       setLoading(false);
     }
-  };
+  }, [lastFetchTime.stats, users, appointments]);
 
-  const fetchUsers = async () => {
+  useEffect(() => {
+    // Only load essential data on initial load
+    fetchDashboardStats();
+  }, [fetchDashboardStats]);
+
+  const fetchUsers = async (forceRefresh = false) => {
+    // Cache for 60 seconds
+    const now = Date.now();
+    if (!forceRefresh && now - lastFetchTime.users < 60000) {
+      return;
+    }
+
     try {
       setUsersLoading(true);
-      console.log('Fetching users...');
-      const response = await fetch('https://movafit-booking-server.vercel.app/api/users/getAllUsers?t=' + Date.now());
-      console.log('Users response status:', response.status);
+      const response = await fetch('https://movafit-booking-server.vercel.app/api/users/getAllUsers');
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
-      console.log('Users API response:', data);
-      console.log('Users array:', data.users);
-      setUsers(data.users || []);
+      const usersArray = data.users || [];
+      setUsers(usersArray);
+      setLastFetchTime(prev => ({ ...prev, users: now }));
     } catch (error) {
-      console.error('Error fetching users:', error);
+      setUsers([]);
     } finally {
       setUsersLoading(false);
     }
   };
 
-  const fetchAppointments = async () => {
+  const fetchAppointments = async (forceRefresh = false) => {
+    // Cache for 60 seconds
+    const now = Date.now();
+    if (!forceRefresh && now - lastFetchTime.appointments < 60000) {
+      return;
+    }
+
     try {
       setAppointmentsLoading(true);
       
       // Fetch appointments
-      const appointmentsResponse = await fetch('https://movafit-booking-server.vercel.app/api/appointments/getAllAppointments?t=' + Date.now());
+      const appointmentsResponse = await fetch('https://movafit-booking-server.vercel.app/api/appointments/getAllAppointments');
       const appointmentsData = await appointmentsResponse.json();
       const appointmentsList = appointmentsData.appointments || [];
 
-      // Fetch users to get client names
-      const usersResponse = await fetch('https://movafit-booking-server.vercel.app/api/users/getAllUsers?t=' + Date.now());
-      const usersData = await usersResponse.json();
-      const usersList = usersData.users || [];
+      // Use cached users if available, otherwise fetch
+      let usersList = users;
+      if (users.length === 0) {
+        const usersResponse = await fetch('https://movafit-booking-server.vercel.app/api/users/getAllUsers');
+        const usersData = await usersResponse.json();
+        usersList = usersData.users || [];
+        setUsers(usersList); // Cache users for future use
+      }
 
       // Combine appointments with user data
       const appointmentsWithUsers = appointmentsList.map((apt: any) => {
@@ -146,10 +202,124 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       });
 
       setAppointments(appointmentsWithUsers);
+      setLastFetchTime(prev => ({ ...prev, appointments: now }));
     } catch (error) {
-      console.error('Error fetching appointments:', error);
+      // Silent error handling
     } finally {
       setAppointmentsLoading(false);
+    }
+  };
+
+  const openStatusModal = (appointment: Appointment) => {
+    setSelectedAppointment(appointment);
+    setNewStatus('completed');
+    setMeasurements({
+      weight: appointment.user?.weight?.toString() || '',
+      chest: '',
+      waist: '',
+      hips: '',
+      caloriesBurnt: '',
+      notes: ''
+    });
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setSelectedAppointment(null);
+    setMeasurements({
+      weight: '',
+      chest: '',
+      waist: '',
+      hips: '',
+      caloriesBurnt: '',
+      notes: ''
+    });
+  };
+
+  const updateAppointmentStatus = async () => {
+    if (!selectedAppointment) return;
+
+    try {
+      setUpdating(true);
+      
+      // Update appointment status
+      const appointmentResponse = await fetch(`https://movafit-booking-server.vercel.app/api/appointments/updateAppointment/${selectedAppointment._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: newStatus,
+          ...(newStatus === 'completed' && {
+            measurements: {
+              weight: measurements.weight ? parseFloat(measurements.weight) : undefined,
+              chest: measurements.chest ? parseFloat(measurements.chest) : undefined,
+              waist: measurements.waist ? parseFloat(measurements.waist) : undefined,
+              hips: measurements.hips ? parseFloat(measurements.hips) : undefined,
+            },
+            caloriesBurnt: measurements.caloriesBurnt ? parseFloat(measurements.caloriesBurnt) : undefined,
+            sessionNotes: measurements.notes
+          })
+        })
+      });
+
+      if (!appointmentResponse.ok) {
+        throw new Error('Failed to update appointment');
+      }
+
+      // If completed, update user's weight and measurements
+      if (newStatus === 'completed' && selectedAppointment.user) {
+        // Update user weight if provided
+        if (measurements.weight) {
+          const weightResponse = await fetch(`https://movafit-booking-server.vercel.app/api/users/updateUserWeight/${selectedAppointment.user._id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ weight: parseFloat(measurements.weight) })
+          });
+
+          if (!weightResponse.ok) {
+            // Weight update failed, but continue with other updates
+          }
+        }
+
+        // Update user measurements if any are provided
+        const hasMeasurements = measurements.chest || measurements.waist || measurements.hips;
+        if (hasMeasurements) {
+          const measurementsData = {
+            chest: measurements.chest ? parseFloat(measurements.chest) : null,
+            waist: measurements.waist ? parseFloat(measurements.waist) : null,
+            hips: measurements.hips ? parseFloat(measurements.hips) : null
+          };
+
+          const measurementsResponse = await fetch(`https://movafit-booking-server.vercel.app/api/users/updateUserMeasurements/${selectedAppointment.user._id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ measurements: measurementsData })
+          });
+
+          if (!measurementsResponse.ok) {
+            // Measurements update failed, but continue
+          }
+        }
+      }
+
+      // Refresh appointments and users data
+      await fetchAppointments(true);
+      await fetchUsers(true);
+      await fetchDashboardStats(true);
+      
+      closeModal();
+      alert(`התור עודכן בהצלחה ל-${newStatus === 'completed' ? 'הושלם' : 'בוטל'}`);
+      
+    } catch (error) {
+      alert('שגיאה בעדכון התור');
+    } finally {
+      setUpdating(false);
     }
   };
 
@@ -158,16 +328,16 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       case 'clients':
         return (
           <div className="content-section">
-            <div className="section-header">
-              <h2>ניהול לקוחות</h2>
-              <button 
-                onClick={fetchUsers} 
-                className="refresh-btn"
-                disabled={usersLoading}
-              >
-                {usersLoading ? 'טוען...' : 'רענן'}
-              </button>
-            </div>
+                  <div className="section-header">
+                    <h2>ניהול לקוחות</h2>
+                    <button 
+                      onClick={() => fetchUsers(true)} 
+                      className="refresh-btn"
+                      disabled={usersLoading}
+                    >
+                      {usersLoading ? 'טוען...' : 'רענן'}
+                    </button>
+                  </div>
             
             {usersLoading ? (
               <div className="loading-state">
@@ -225,7 +395,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
             <div className="section-header">
               <h2>ניהול תורים</h2>
               <button 
-                onClick={fetchAppointments} 
+                onClick={() => fetchAppointments(true)} 
                 className="refresh-btn"
                 disabled={appointmentsLoading}
               >
@@ -265,6 +435,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                             <p><strong>לקוח:</strong> {apt.user?.fullName || 'לא ידוע'}</p>
                             <p><strong>טלפון:</strong> {apt.user?.phone || 'לא ידוע'}</p>
                             {apt.notes && <p><strong>הערות:</strong> {apt.notes}</p>}
+                          </div>
+                          <div className="appointment-actions">
+                            <button 
+                              className="status-update-btn"
+                              onClick={() => openStatusModal(apt)}
+                            >
+                              עדכן סטטוס
+                            </button>
                           </div>
                         </div>
                       ))}
@@ -377,14 +555,20 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     <div className="dashboard">
       <div className="sidebar">
         <div className="sidebar-header">
-          <h2>מובפיט</h2>
-          <p>פאנל ניהול</p>
+          <img 
+            src={require('../assets/movfit.png')} 
+            alt="Movafit Logo" 
+            className="sidebar-logo"
+          />
         </div>
         
         <nav className="sidebar-nav">
           <button 
             className={`nav-item ${activeSection === 'overview' ? 'active' : ''}`}
-            onClick={() => setActiveSection('overview')}
+            onClick={() => {
+              setActiveSection('overview');
+              fetchDashboardStats(true); // Force refresh stats when clicking overview
+            }}
           >
             <span className="nav-icon">📊</span>
             <span className="nav-text">סקירה כללית</span>
@@ -392,7 +576,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           
           <button 
             className={`nav-item ${activeSection === 'clients' ? 'active' : ''}`}
-            onClick={() => setActiveSection('clients')}
+            onClick={() => {
+              setActiveSection('clients');
+              fetchUsers(true); // Force refresh users data when clicking clients
+            }}
           >
             <span className="nav-icon">👥</span>
             <span className="nav-text">לקוחות</span>
@@ -400,26 +587,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           
           <button 
             className={`nav-item ${activeSection === 'appointments' ? 'active' : ''}`}
-            onClick={() => setActiveSection('appointments')}
+            onClick={() => {
+              setActiveSection('appointments');
+              fetchAppointments(true); // Force refresh appointments data when clicking appointments
+            }}
           >
             <span className="nav-icon">📅</span>
             <span className="nav-text">תורים</span>
-          </button>
-          
-          <button 
-            className={`nav-item ${activeSection === 'reports' ? 'active' : ''}`}
-            onClick={() => setActiveSection('reports')}
-          >
-            <span className="nav-icon">📈</span>
-            <span className="nav-text">דוחות</span>
-          </button>
-          
-          <button 
-            className={`nav-item ${activeSection === 'settings' ? 'active' : ''}`}
-            onClick={() => setActiveSection('settings')}
-          >
-            <span className="nav-icon">⚙️</span>
-            <span className="nav-text">הגדרות</span>
           </button>
         </nav>
         
@@ -432,14 +606,133 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       </div>
       
       <div className="main-content">
-        <header className="content-header">
-          <h1>פאנל ניהול מובפיט</h1>
-        </header>
-        
         <main className="dashboard-main">
           {renderContent()}
         </main>
       </div>
+
+      {/* Status Update Modal */}
+      {modalOpen && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>עדכון סטטוס תור</h3>
+              <button className="modal-close" onClick={closeModal}>×</button>
+            </div>
+            
+            <div className="modal-body">
+              {selectedAppointment && (
+                <div className="appointment-info">
+                  <p><strong>תאריך:</strong> {new Date(selectedAppointment.date).toLocaleDateString('he-IL')}</p>
+                  <p><strong>שעה:</strong> {selectedAppointment.time}</p>
+                  <p><strong>לקוח:</strong> {selectedAppointment.user?.fullName}</p>
+                </div>
+              )}
+
+              <div className="status-selection">
+                <label>
+                  <input
+                    type="radio"
+                    value="completed"
+                    checked={newStatus === 'completed'}
+                    onChange={(e) => setNewStatus(e.target.value as 'completed')}
+                  />
+                  הושלם
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    value="cancelled"
+                    checked={newStatus === 'cancelled'}
+                    onChange={(e) => setNewStatus(e.target.value as 'cancelled')}
+                  />
+                  בוטל
+                </label>
+              </div>
+
+              {newStatus === 'completed' && (
+                <div className="measurements-section">
+                  <h4>מדידות ותוצאות</h4>
+                  <div className="measurements-grid">
+                    <div className="measurement-field">
+                      <label>משקל (ק"ג)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={measurements.weight}
+                        onChange={(e) => setMeasurements({...measurements, weight: e.target.value})}
+                        placeholder="הזן משקל"
+                      />
+                    </div>
+                    <div className="measurement-field">
+                      <label>חזה (ס"מ)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={measurements.chest}
+                        onChange={(e) => setMeasurements({...measurements, chest: e.target.value})}
+                        placeholder="הזן מדידת חזה"
+                      />
+                    </div>
+                    <div className="measurement-field">
+                      <label>מותן (ס"מ)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={measurements.waist}
+                        onChange={(e) => setMeasurements({...measurements, waist: e.target.value})}
+                        placeholder="הזן מדידת מותן"
+                      />
+                    </div>
+                    <div className="measurement-field">
+                      <label>ירכיים (ס"מ)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={measurements.hips}
+                        onChange={(e) => setMeasurements({...measurements, hips: e.target.value})}
+                        placeholder="הזן מדידת ירכיים"
+                      />
+                    </div>
+                    <div className="measurement-field">
+                      <label>קלוריות שנשרפו</label>
+                      <input
+                        type="number"
+                        step="1"
+                        value={measurements.caloriesBurnt}
+                        onChange={(e) => setMeasurements({...measurements, caloriesBurnt: e.target.value})}
+                        placeholder="הזן מספר קלוריות"
+                      />
+                    </div>
+                  </div>
+                  <div className="notes-field">
+                    <label>הערות על המפגש</label>
+                    <textarea
+                      value={measurements.notes}
+                      onChange={(e) => setMeasurements({...measurements, notes: e.target.value})}
+                      placeholder="הזן הערות על המפגש..."
+                      rows={3}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="modal-footer">
+              <button className="btn-cancel" onClick={closeModal}>
+                ביטול
+              </button>
+              <button 
+                className="btn-save" 
+                onClick={updateAppointmentStatus}
+                disabled={updating}
+              >
+                {updating ? 'שומר...' : 'שמור'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
