@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "buildCommand": "npm ci && GENERATE_SOURCEMAP=false npm run build",
+  "buildCommand": "npm install --legacy-peer-deps && GENERATE_SOURCEMAP=false npm run build",
   "outputDirectory": "build",
-  "installCommand": "npm ci --legacy-peer-deps",
+  "installCommand": "npm install --legacy-peer-deps",
   "framework": "create-react-app",
   "env": {
     "GENERATE_SOURCEMAP": "false"
