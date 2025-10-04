@@ -18,6 +18,7 @@ export interface User {
     hips?: number;
   };
   isActive: boolean;
+  isAdmin?: boolean;
   createdAt: string;
 }
 

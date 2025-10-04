@@ -5,9 +5,18 @@ interface UsersSectionProps {
   users: User[];
   usersLoading: boolean;
   onRefresh: () => void;
+  currentAdmin?: any;
 }
 
-export const UsersSection: React.FC<UsersSectionProps> = ({ users, usersLoading, onRefresh }) => {
+export const UsersSection: React.FC<UsersSectionProps> = ({ users, usersLoading, onRefresh, currentAdmin }) => {
+  // Filter out admin users - only show regular clients
+  let clientUsers = users.filter(user => !user.isAdmin);
+  
+  // Filter by admin's own gender - male admin sees male clients, female admin sees female clients
+  if (currentAdmin?.gender) {
+    clientUsers = clientUsers.filter(user => user.gender === currentAdmin.gender);
+  }
+  
   return (
     <div className="content-section">
       <div className="section-header">
@@ -25,7 +34,7 @@ export const UsersSection: React.FC<UsersSectionProps> = ({ users, usersLoading,
         <div className="loading-state">
           <p>טוען לקוחות...</p>
         </div>
-      ) : users.length === 0 ? (
+      ) : clientUsers.length === 0 ? (
         <div className="empty-state">
           <p>לא נמצאו לקוחות</p>
         </div>
@@ -43,7 +52,7 @@ export const UsersSection: React.FC<UsersSectionProps> = ({ users, usersLoading,
               </tr>
             </thead>
             <tbody>
-              {users.map((user) => (
+              {clientUsers.map((user) => (
                 <tr key={user._id}>
                   <td>{user.fullName}</td>
                   <td>{user.phone}</td>

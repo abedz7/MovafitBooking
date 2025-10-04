@@ -6,20 +6,30 @@ interface AppointmentsSectionProps {
   appointmentsLoading: boolean;
   onRefresh: () => void;
   onUpdateStatus: (appointment: Appointment) => void;
+  currentAdmin?: any;
 }
 
 export const AppointmentsSection: React.FC<AppointmentsSectionProps> = ({ 
   appointments, 
   appointmentsLoading, 
   onRefresh, 
-  onUpdateStatus 
+  onUpdateStatus,
+  currentAdmin 
 }) => {
-  const upcomingAppointments = appointments.filter(apt => {
+  // Filter appointments by admin's own gender - male admin sees male appointments, female admin sees female appointments
+  let filteredAppointments = appointments;
+  if (currentAdmin?.gender) {
+    filteredAppointments = appointments.filter(apt => 
+      apt.user?.gender === currentAdmin.gender
+    );
+  }
+
+  const upcomingAppointments = filteredAppointments.filter(apt => {
     const appointmentDateTime = new Date(`${apt.date}T${apt.time}`);
     return apt.status === 'scheduled' && appointmentDateTime > new Date();
   }).sort((a, b) => new Date(`${a.date}T${a.time}`).getTime() - new Date(`${b.date}T${b.time}`).getTime());
 
-  const completedAppointments = appointments.filter(apt => apt.status === 'completed')
+  const completedAppointments = filteredAppointments.filter(apt => apt.status === 'completed')
     .sort((a, b) => new Date(`${b.date}T${b.time}`).getTime() - new Date(`${a.date}T${a.time}`).getTime());
 
   return (

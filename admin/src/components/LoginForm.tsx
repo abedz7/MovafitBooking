@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import './LoginForm.css';
 
 interface LoginFormProps {
-  onLogin: (isAdmin: boolean) => void;
+  onLogin: (adminData: any) => void;
 }
 
 const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
@@ -30,9 +30,15 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
 
       const data = await response.json();
 
-      if (response.ok) {
-        setMessage('✅ Login successful!');
-        setTimeout(() => onLogin(true), 1500);
+      if (response.ok && data.user) {
+        // Check if the authenticated user is an admin
+        if (data.user.isAdmin) {
+          const genderText = data.user.gender === 'male' ? 'גברים' : 'נשים';
+          setMessage(`✅ התחברת בהצלחה כמנהל ${genderText}!`);
+          setTimeout(() => onLogin(data.user), 1500);
+        } else {
+          setMessage('❌ אין לך הרשאות מנהל');
+        }
       } else {
         setMessage('❌ ' + (data.error || 'Login failed'));
       }
