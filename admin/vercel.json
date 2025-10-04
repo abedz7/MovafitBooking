@@ -1,4 +1,8 @@
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": "build"
+  "buildCommand": "SKIP_PREFLIGHT_CHECK=true npm run build",
+  "outputDirectory": "build",
+  "env": {
+    "SKIP_PREFLIGHT_CHECK": "true",
+    "GENERATE_SOURCEMAP": "false"
+  }
 }
