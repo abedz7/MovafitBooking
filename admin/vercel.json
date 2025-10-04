@@ -1,10 +1,7 @@
 {
   "version": 2,
-  "buildCommand": "yarn install && GENERATE_SOURCEMAP=false yarn build",
-  "outputDirectory": "build",
-  "installCommand": "yarn install",
-  "framework": "create-react-app",
-  "env": {
-    "GENERATE_SOURCEMAP": "false"
-  }
+  "buildCommand": "echo 'Deploying static files'",
+  "outputDirectory": "dist",
+  "framework": null,
+  "installCommand": "echo 'No dependencies needed for static deployment'"
 }
