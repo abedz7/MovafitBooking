@@ -19,10 +19,12 @@ export const useDashboardData = () => {
     // Cache for 30 seconds
     const now = Date.now();
     if (!forceRefresh && now - lastFetchTime.stats < 30000) {
+      console.log('Using cached dashboard stats');
       return;
     }
 
     try {
+      console.log('Fetching dashboard stats...');
       setLoading(true);
       
       // Use cached data if available and recent
@@ -46,15 +48,33 @@ export const useDashboardData = () => {
       }
 
       // Fetch fresh data only if needed
+      console.log('Making API calls...');
+      console.log('Current origin:', window.location.origin);
+      
       const [usersResponse, appointmentsResponse] = await Promise.all([
         fetch('https://movafit-booking-server.vercel.app/api/users/getAllUsers'),
         fetch('https://movafit-booking-server.vercel.app/api/appointments/getAllAppointments')
       ]);
 
+      console.log('API responses:', { 
+        usersResponse: { 
+          ok: usersResponse.ok, 
+          status: usersResponse.status, 
+          statusText: usersResponse.statusText 
+        },
+        appointmentsResponse: { 
+          ok: appointmentsResponse.ok, 
+          status: appointmentsResponse.status, 
+          statusText: appointmentsResponse.statusText 
+        }
+      });
+
       const [usersData, appointmentsData] = await Promise.all([
         usersResponse.json(),
         appointmentsResponse.json()
       ]);
+
+      console.log('API data:', { usersData, appointmentsData });
 
       const totalUsers = usersData.users ? usersData.users.length : 0;
       const appointmentsList = appointmentsData.appointments || [];
@@ -66,15 +86,18 @@ export const useDashboardData = () => {
         .filter((apt: any) => apt.status === 'completed')
         .reduce((total: number, apt: any) => total + (apt.caloriesBurnt || 0), 0);
 
-      setStats({
+      const newStats = {
         totalUsers,
         upcomingAppointments,
         completedSessions,
         totalCaloriesBurnt
-      });
+      };
+      
+      console.log('Setting stats:', newStats);
+      setStats(newStats);
       setLastFetchTime(prev => ({ ...prev, stats: now }));
     } catch (error) {
-      // Silent error handling
+      console.error('Error fetching dashboard stats:', error);
     } finally {
       setLoading(false);
     }
