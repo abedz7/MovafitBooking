@@ -18,7 +18,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
     setMessage('');
 
     try {
-      console.log('Attempting login with:', { phone, password: '***' });
       const response = await fetch('https://movafit-booking-server.vercel.app/api/users/authenticateUser', {
         method: 'POST',
         headers: {
@@ -31,7 +30,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
       });
 
       const data = await response.json();
-      console.log('Login response:', { response, data });
 
       if (response.ok && data.user) {
         // Check if the authenticated user is an admin
