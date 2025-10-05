@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from './AuthContext';
 
@@ -78,7 +78,7 @@ export const BookingProvider = ({ children }) => {
     }
   }, [token]);
 
-  const fetchAppointments = async (userId) => {
+  const fetchAppointments = useCallback(async (userId) => {
     try {
       setLoading(true);
       if (!userId) {
@@ -106,7 +106,7 @@ export const BookingProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []); // Empty dependency array since this function doesn't depend on any external variables
 
   const fetchPackages = async () => {
     try {

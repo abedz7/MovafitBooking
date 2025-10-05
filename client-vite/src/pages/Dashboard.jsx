@@ -10,13 +10,14 @@ const Dashboard = () => {
   const { appointments, fetchAppointments, cancelAppointment, loading } = useBooking();
   const [activeTab, setActiveTab] = useState('overview');
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
 
   useEffect(() => {
     if (user && user._id) {
       fetchAppointments(user._id);
     }
-  }, [user, fetchAppointments]);
+  }, [user?._id, fetchAppointments]); // Only depend on user._id, not the entire user object
 
   const handleCancelAppointment = async () => {
     if (selectedAppointment) {
@@ -28,6 +29,11 @@ const Dashboard = () => {
         console.error('Error cancelling appointment:', error);
       }
     }
+  };
+
+  const handleViewAppointment = (appointment) => {
+    setSelectedAppointment(appointment);
+    setShowDetailsModal(true);
   };
 
   const upcomingAppointments = appointments.filter(apt => 
@@ -360,7 +366,11 @@ const Dashboard = () => {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                               <div className="flex items-center space-x-2 space-x-reverse">
-                                <button className="text-primary-600 hover:text-primary-900">
+                                <button 
+                                  onClick={() => handleViewAppointment(appointment)}
+                                  className="text-primary-600 hover:text-primary-900"
+                                  title="צפה בפרטים"
+                                >
                                   <Eye className="h-4 w-4" />
                                 </button>
                                 {(appointment.status === 'scheduled' || appointment.status === 'confirmed') && (
@@ -388,6 +398,100 @@ const Dashboard = () => {
             )}
           </div>
         </motion.div>
+
+        {/* Appointment Details Modal */}
+        {showDetailsModal && selectedAppointment && (
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+            <div className="relative top-10 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-gray-800">
+              <div className="mt-3">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-xl font-medium text-white">
+                    פרטי התור
+                  </h3>
+                  <button
+                    onClick={() => setShowDetailsModal(false)}
+                    className="text-gray-400 hover:text-white text-2xl"
+                  >
+                    ×
+                  </button>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div className="bg-gray-700 rounded-lg p-4">
+                      <h4 className="text-sm font-medium text-gray-300 mb-2">תאריך ושעה</h4>
+                      <p className="text-white text-lg">
+                        {formatDate(selectedAppointment.date)} - {formatTime(selectedAppointment.time)}
+                      </p>
+                    </div>
+                    
+                    <div className="bg-gray-700 rounded-lg p-4">
+                      <h4 className="text-sm font-medium text-gray-300 mb-2">סוג הטיפול</h4>
+                      <p className="text-white">
+                        {selectedAppointment.type === 'package' ? 'חבילה' : 'טיפול יחיד'}
+                      </p>
+                    </div>
+                    
+                    <div className="bg-gray-700 rounded-lg p-4">
+                      <h4 className="text-sm font-medium text-gray-300 mb-2">סטטוס</h4>
+                      <span className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(selectedAppointment.status)}`}>
+                        {getStatusText(selectedAppointment.status)}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    {selectedAppointment.notes && (
+                      <div className="bg-gray-700 rounded-lg p-4">
+                        <h4 className="text-sm font-medium text-gray-300 mb-2">הערות</h4>
+                        <p className="text-white">{selectedAppointment.notes}</p>
+                      </div>
+                    )}
+                    
+                    {selectedAppointment.measurements && (
+                      <div className="bg-gray-700 rounded-lg p-4">
+                        <h4 className="text-sm font-medium text-gray-300 mb-2">מידות עדכניות</h4>
+                        <div className="text-white space-y-1">
+                          {selectedAppointment.measurements.weight && (
+                            <p>משקל: {selectedAppointment.measurements.weight} ק"ג</p>
+                          )}
+                          {selectedAppointment.measurements.chest && (
+                            <p>חזה: {selectedAppointment.measurements.chest} ס"מ</p>
+                          )}
+                          {selectedAppointment.measurements.waist && (
+                            <p>מותן: {selectedAppointment.measurements.waist} ס"מ</p>
+                          )}
+                          {selectedAppointment.measurements.hips && (
+                            <p>ירכיים: {selectedAppointment.measurements.hips} ס"מ</p>
+                          )}
+                          {selectedAppointment.measurements.caloriesBurnt && (
+                            <p>קלוריות שנשרפו: {selectedAppointment.measurements.caloriesBurnt}</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="bg-gray-700 rounded-lg p-4">
+                      <h4 className="text-sm font-medium text-gray-300 mb-2">תאריך יצירת התור</h4>
+                      <p className="text-white">
+                        {selectedAppointment.createdAt ? new Date(selectedAppointment.createdAt).toLocaleDateString('he-IL') : 'לא זמין'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex justify-end mt-6">
+                  <button
+                    onClick={() => setShowDetailsModal(false)}
+                    className="px-6 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700"
+                  >
+                    סגור
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Cancel Modal */}
         {showCancelModal && (
