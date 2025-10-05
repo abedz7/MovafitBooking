@@ -822,9 +822,38 @@
     color: white;
   }
   
-  /* Remove Footer on Mobile */
+  /* Mobile Footer - Show Logout Button */
   .sidebar-footer {
-    display: none;
+    display: block;
+    padding: 15px 20px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    border-radius: 16px;
+    margin: 0 15px 15px;
+  }
+  
+  .logout-btn {
+    width: 100%;
+    background: #ff4757;
+    color: white;
+    border: none;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3);
+  }
+  
+  .logout-btn:hover {
+    background: #ff3742;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 71, 87, 0.4);
   }
   
   /* Main Content */

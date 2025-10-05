@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Calendar, Users, Clock, Shield, Star, ArrowRight } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import Movalogo from '../assets/Movalogo.png';
 
 const Home = () => {
   const { isAuthenticated } = useAuth();

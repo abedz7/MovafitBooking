@@ -52,7 +52,7 @@ const Navbar = () => {
               <img 
                 src={Movalogo} 
                 alt="Movafit Logo" 
-                className="h-12 w-auto sm:h-14 sm:w-auto md:h-16 md:w-auto object-contain transition-all duration-300 group-hover:scale-105 group-hover:drop-shadow-md"
+                className="h-20 w-auto sm:h-24 sm:w-auto md:h-28 md:w-auto object-contain transition-all duration-300 group-hover:scale-105 group-hover:drop-shadow-md"
               />
             </div>
           </Link>
