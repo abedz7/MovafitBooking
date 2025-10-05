@@ -2,6 +2,9 @@
   "name": "admin",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": "18.x"
+  },
   "dependencies": {
     "@types/lodash": "^4.14.202",
     "ajv": "6.12.6",
@@ -34,9 +37,6 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "engines": {
-    "node": "22.x"
   },
   "devDependencies": {
     "@types/react": "^18.3.25",
