@@ -1,8 +1,7 @@
 {
-  "buildCommand": "bash .vercel-build.sh",
+  "buildCommand": "npm run build",
   "outputDirectory": "build",
   "env": {
-    "NODE_VERSION": "18",
     "GENERATE_SOURCEMAP": "false",
     "SKIP_PREFLIGHT_CHECK": "true"
   }
