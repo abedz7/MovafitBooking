@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { DashboardStats, LastFetchTime, User, Appointment } from '../types/dashboard';
+import type { DashboardStats, LastFetchTime, User, Appointment } from '../types/dashboard';
 
 export const useDashboardData = () => {
   const [stats, setStats] = useState<DashboardStats>({

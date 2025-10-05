@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { User } from '../types/dashboard';
+import type { User } from '../types/dashboard';
 
 export const useUsers = () => {
   const [users, setUsers] = useState<User[]>([]);
